@@ -7,6 +7,7 @@ class Mesh:
     def __init__(self, chunk, chunks):
         self.vBuffer = [0] * (W * H * D * 6 * 6 * V_SIZE)
         self.iBuffer = []
+        self.updated = {}
         self.chunk = chunk
 
         cx = chunk.posX
@@ -64,15 +65,27 @@ class Mesh:
             self.vBuffer[pos + 5] = ind
             pos += 6
 
+    def remove_side(self, g, x, y, z):
+        pos = (z + D * (x + W * y)) * 6 * 6 * V_SIZE
+        pos += g * 6 * V_SIZE
+        buffer = [0] * 36
+        self.updated[z + D * (x + W * y)] = buffer
+        for i in range(36):
+            self.vBuffer[pos + i] = 0
+
     def update_nears(self, x, y, z):
         for i in range(6):
             nx = x + geom.normals[i][0]
             ny = y + geom.normals[i][1]
             nz = z + geom.normals[i][2]
-            self.add_side(geom.sides[i], nx, ny, nz, 1)
+            if self.chunk.voxels[nz + D * (nx + W * ny)] != 0:
+                self.remove_side(geom.sides[i], nx, ny, nz)
+                self.add_side(geom.sides[i], nx, ny, nz, 1)
 
     def remove_block(self, x, y, z):
         pos = (z + D * (x + W * y)) * 6 * 6 * V_SIZE
+        buffer = [0] * 6 * 6 * V_SIZE
+        self.updated[z + D * (x + W * y)] = buffer
         for i in range(pos, pos + 6 * 6 * V_SIZE):
             self.vBuffer[i] = 0
         self.update_nears(x, y, z)

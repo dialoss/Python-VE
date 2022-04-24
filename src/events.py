@@ -88,7 +88,7 @@ class Events:
 
         if button == 1:
             cls.updateBlock.append([coords[0], coords[1], coords[2], 1])
-        if button == 2:
+        else:
             cls.updateBlock.append([coords[0] + normal[0],
                                         coords[1] + normal[1],
                                         coords[2] + normal[2], 2])

@@ -30,7 +30,7 @@ class ChunkManager:
 
     def get_chunk(self, x, y, z):
         if y < 0 or y >= H:
-            return -1
+            return None
         cx = x // W
         cz = z // D
         try:

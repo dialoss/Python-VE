@@ -56,6 +56,8 @@ class Window(pyglet.window.Window):
         if len(Events.updateBlock) > 0:
             for op in Events.updateBlock:
                 chunk = self.world.get_chunk(op[0], op[1], op[2])
+                if chunk is None:
+                    continue
                 vx = op[0] - chunk.posX * W
                 vz = op[2] - chunk.posZ * D
                 y = op[1]
