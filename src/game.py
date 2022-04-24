@@ -10,6 +10,7 @@ from utility.debug import *
 from src.world.chunk import *
 import src.utility.variables as util
 from world.chunkManager import *
+from src.utility.actions import *
 
 
 class Window(pyglet.window.Window):
@@ -17,11 +18,10 @@ class Window(pyglet.window.Window):
         super().__init__(*args, **kwargs)
         self.camera = camera
         self.shader = shader
-        self.world = ChunkManager(5, 5)
+        ChunkManager.create(2, 2)
         Events.camera = self.camera
         Events.mouseX = self.width / 2
         Events.mouseY = self.height / 2
-        Raycast.set(self.world.chunks)
         glEnable(GL_DEPTH_TEST)
         pyglet.clock.schedule_interval(self.update, 1.0 / 1000)
 
@@ -37,8 +37,8 @@ class Window(pyglet.window.Window):
         self.shader.uniformi("texture_array", 0)
         self.shader.uniformm("proj", self.camera.proj)
         self.shader.uniformm("view", self.camera.lookAt)
-        Debug.log(self.camera.pos)
-        for coord, chunk in self.world.chunks.items():
+        #Debug.log(self.camera.pos)
+        for coord, chunk in ChunkManager.chunks.items():
             x = coord // 100
             z = coord % 100
             model = Matrix.translate(Vector(x * W, 0, z * D))
@@ -47,13 +47,25 @@ class Window(pyglet.window.Window):
 
         self.crosshader.use()
         self.crossRenderer.draw()
-        coords = Raycast.hit_ray(self.camera.pos, self.camera.dir, 50)
-        Debug.log(coords)
 
     def update(self, delta_time):
         self.set_exclusive_mouse(Events.hideMouse)
         Events.update(delta_time)
         self.camera.update_matrix()
+        if len(Actions.updateBlock) > 0:
+            for op in Actions.updateBlock:
+                chunk = ChunkManager.get_chunk(op[0], op[1], op[2])
+                vx = op[0] - chunk.posX * W
+                vz = op[2] - chunk.posZ * D
+                y = op[1]
+                if op[3] == 1:
+                    chunk.voxels[vz + D * (vx + W * y)] = 0
+                    chunk.mesh.remove_block(vx, y, vz)
+                else:
+                    chunk.voxels[vz + D * (vx + W * y)] = 2
+                    chunk.mesh.place_block(vx, y, vz, 2)
+
+                chunk.renderer.update(chunk.mesh.vBuffer, chunk.mesh.iBuffer, [3, 2, 1])
 
     def on_resize(self, width, height):
         Events.on_resize(width, height)
@@ -65,7 +77,7 @@ class Window(pyglet.window.Window):
         Events.on_key_release(symbol)
 
     def on_mouse_press(self, x, y, button, modifiers):
-        Events.on_mouse_press()
+        Events.on_mouse_press(button)
 
     def on_mouse_motion(self, x, y, dx, dy):
         Events.on_mouse_moved(dx, dy)

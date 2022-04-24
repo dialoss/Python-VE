@@ -1,6 +1,9 @@
 import pyglet
 from pyglet.gl import *
 import glm
+from src.utility.raycast import *
+from src.utility.debug import *
+from src.utility.actions import *
 
 import glmath
 from glmath import *
@@ -21,17 +24,19 @@ class Events:
     deltaX = 90
     deltaY = 0
     firstMouse = True
+    blockRemoved = []
+    blockPlaced = []
 
     @classmethod
     def update(cls, dt):
         if cls.clicked(pyglet.window.key.A):
             if isinstance(cls.camera.pos, glm.vec3):
-                cls.camera.pos -= glm.normalize(glm.cross(cls.camera.dir, cls.camera.up))* dt * cls.speed
+                cls.camera.pos -= glm.normalize(glm.cross(cls.camera.dir, cls.camera.up)) * dt * cls.speed
             else:
                 cls.camera.pos -= (cls.camera.dir * cls.camera.up).normalize() * dt * cls.speed
         if cls.clicked(pyglet.window.key.D):
             if isinstance(cls.camera.pos, glm.vec3):
-                cls.camera.pos += glm.normalize(glm.cross(cls.camera.dir, cls.camera.up))* dt * cls.speed
+                cls.camera.pos += glm.normalize(glm.cross(cls.camera.dir, cls.camera.up)) * dt * cls.speed
             else:
                 cls.camera.pos += (cls.camera.dir * cls.camera.up).normalize() * dt * cls.speed
         if cls.clicked(pyglet.window.key.W):
@@ -77,8 +82,18 @@ class Events:
         cls.pressed[symbol] = 0
 
     @classmethod
-    def on_mouse_press(cls):
-        pass
+    def on_mouse_press(cls, button):
+        normal = [0, 0, 0]
+        coords = Raycast.hit_ray(cls.camera.pos, cls.camera.dir, 50, normal)
+        Debug.log(coords)
+        Debug.log(normal)
+
+        if button == pyglet.window.key.LEFT:
+            Actions.updateBlock.append([coords[0], coords[1], coords[2], 1])
+        if button == pyglet.window.key.RIGHT:
+            Actions.updateBlock.append([coords[0] + normal[0],
+                                        coords[1] + normal[1],
+                                        coords[2] + normal[2], 2])
 
     @classmethod
     def on_mouse_moved(cls, dx, dy):

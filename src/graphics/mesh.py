@@ -3,27 +3,11 @@ import src.utility.geometry as geom
 from src.utility.debug import *
 
 
-def check_nears(ind, chunk, nears, x, y, z):
-    xn = x + geom.normals[ind][0]
-    yn = y + geom.normals[ind][1]
-    zn = z + geom.normals[ind][2]
-    if xn < 0 or zn < 0 or xn >= W or zn >= D:
-        if nears[ind] is not None:
-            xn %= 16
-            zn %= 16
-            return nears[ind].voxels[zn + D * (xn + W * yn)] != 0
-        return True
-
-    if yn < 0:
-        return True
-
-    return chunk.voxels[zn + D * (xn + W * yn)] != 0
-
-
 class Mesh:
     def __init__(self, chunk, chunks):
+        self.vBuffer = [0] * (W * H * D * 6 * 6 * V_SIZE)
         self.iBuffer = []
-        self.vBuffer = []
+        self.chunk = chunk
 
         cx = chunk.posX
         cz = chunk.posZ
@@ -37,6 +21,8 @@ class Mesh:
             except:
                 continue
 
+        self.nears = nears
+
         for x in range(W):
             for y in range(H):
                 for z in range(D):
@@ -44,16 +30,55 @@ class Mesh:
                     if ind == 0:
                         continue
                     for g in range(6):
-                        if check_nears(g, chunk, nears, x, y, z):
-                            continue
-                        v = geom.cube[g]
-                        # ind = geom.indices[g]
-                        # for k in range(len(ind)):
-                        #     self.iBuffer.append(ind[k] + z + D * (x + W * y))
-                        for k in range(len(v)):
-                            self.vBuffer.append(v[k][0] + x)
-                            self.vBuffer.append(v[k][1] + y)
-                            self.vBuffer.append(v[k][2] + z)
-                            self.vBuffer.append(v[k][3])
-                            self.vBuffer.append(v[k][4])
-                            self.vBuffer.append(ind)
+                        self.add_side(g, x, y, z, ind)
+
+    def check_nears(self, g, x, y, z):
+        xn = x + geom.normals[g][0]
+        yn = y + geom.normals[g][1]
+        zn = z + geom.normals[g][2]
+        if xn < 0 or zn < 0 or xn >= W or zn >= D:
+            if self.nears[g] is not None:
+                xn %= 16
+                zn %= 16
+                return self.nears[g].voxels[zn + D * (xn + W * yn)] != 0
+            else:
+                return False
+
+        if yn < 0:
+            return True
+
+        return self.chunk.voxels[zn + D * (xn + W * yn)] != 0
+
+    def add_side(self, g, x, y, z, ind):
+        if self.check_nears(g, x, y, z):
+            return
+        v = geom.cube[g]
+        pos = (z + D * (x + W * y)) * 6 * 6 * V_SIZE
+        pos += g * 6 * V_SIZE
+        for k in range(len(v)):
+            self.vBuffer[pos] = v[k][0] + x
+            self.vBuffer[pos + 1] = v[k][1] + y
+            self.vBuffer[pos + 2] = v[k][2] + z
+            self.vBuffer[pos + 3] = v[k][3]
+            self.vBuffer[pos + 4] = v[k][4]
+            self.vBuffer[pos + 5] = ind
+            pos += 6
+
+    def update_nears(self, x, y, z):
+        for i in range(6):
+            nx = x + geom.normals[i][0]
+            ny = y + geom.normals[i][1]
+            nz = z + geom.normals[i][2]
+            self.add_side(geom.sides[i], nx, ny, nz, 1)
+
+    def remove_block(self, x, y, z):
+        pos = z + D * (x + W * y)
+        pos *= 6 * 6 * V_SIZE
+        for i in range(pos, pos + 6 * 6 * V_SIZE):
+            self.vBuffer[i] = 0
+        self.update_nears(x, y, z)
+
+    def place_block(self, x, y, z, ind):
+        for g in range(6):
+            self.add_side(g, x, y, z, ind)
+        self.update_nears(x, y, z)
