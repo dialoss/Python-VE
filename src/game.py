@@ -5,6 +5,7 @@ from glmath import *
 from src.graphics.shader import *
 from src.graphics.texture import *
 from camera import *
+from src.utility.raycast import *
 from utility.debug import *
 from src.world.chunk import *
 import src.utility.variables as util
@@ -20,6 +21,7 @@ class Window(pyglet.window.Window):
         Events.camera = self.camera
         Events.mouseX = self.width / 2
         Events.mouseY = self.height / 2
+        Raycast.set(self.world.chunks)
         glEnable(GL_DEPTH_TEST)
         pyglet.clock.schedule_interval(self.update, 1.0 / 1000)
 
@@ -35,7 +37,7 @@ class Window(pyglet.window.Window):
         self.shader.uniformi("texture_array", 0)
         self.shader.uniformm("proj", self.camera.proj)
         self.shader.uniformm("view", self.camera.lookAt)
-        Debug.log(self.camera.dir)
+        Debug.log(self.camera.pos)
         for coord, chunk in self.world.chunks.items():
             x = coord // 100
             z = coord % 100
@@ -45,6 +47,8 @@ class Window(pyglet.window.Window):
 
         self.crosshader.use()
         self.crossRenderer.draw()
+        coords = Raycast.hit_ray(self.camera.pos, self.camera.dir, 50)
+        Debug.log(coords)
 
     def update(self, delta_time):
         self.set_exclusive_mouse(Events.hideMouse)
