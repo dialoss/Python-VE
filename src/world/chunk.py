@@ -17,7 +17,7 @@ class Chunk:
                 realZ = D * posZ + z
                 h = max(int(math.sin(realX * 0.5) * 10), 5)
                 for y in range(h):
-                    if y < 3:
-                        self.voxels[z + D * (x + W * y)] = 1
-                    else:
+                    if y < 7:
                         self.voxels[z + D * (x + W * y)] = 2
+                    else:
+                        self.voxels[z + D * (x + W * y)] = 1

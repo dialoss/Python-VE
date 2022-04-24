@@ -7,6 +7,7 @@ from src.graphics.texture import *
 from camera import *
 from utility.debug import *
 from src.world.chunk import *
+import src.utility.variables as util
 from world.chunkManager import *
 
 
@@ -26,7 +27,7 @@ class Window(pyglet.window.Window):
         self.crosshader = Shader("../res/shaders/cross.vert", "../res/shaders/cross.frag")
 
     def on_draw(self):
-        glClearColor(1, 0.5, 0.2, 1)
+        glClearColor(*util.get_color(146, 188, 222), 1)
         self.clear()
         self.shader.use()
         Texture.use()
@@ -34,7 +35,7 @@ class Window(pyglet.window.Window):
         self.shader.uniformi("texture_array", 0)
         self.shader.uniformm("proj", self.camera.proj)
         self.shader.uniformm("view", self.camera.lookAt)
-        Debug.log(self.camera.pos)
+        Debug.log(self.camera.dir)
         for coord, chunk in self.world.chunks.items():
             x = coord // 100
             z = coord % 100
@@ -72,7 +73,8 @@ class Game:
         self.shader = Shader("../res/shaders/main.vert", "../res/shaders/main.frag")
         self.window = Window(self.shader, self.camera, *args, **kwargs)
         self.window.set_location(0, 30)
-        Texture.create(32, 32, 2, "D:/Programming/newmine/res/textures")
+        Texture.create(32, 32, 3, "D:/Programming/newmine/res/textures")
+        Texture.add_texture("void.png")
         Texture.add_texture("green.png")
         Texture.add_texture("orange.png")
         Texture.generate_mipmaps()

@@ -1,7 +1,7 @@
 #version 330
 
 out vec4 fragColor;
-in int textInd;
+in float textInd;
 in vec2 textCoord;
 
 uniform sampler2DArray texture_array;
