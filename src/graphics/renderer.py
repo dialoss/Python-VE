@@ -42,6 +42,16 @@ class Renderer:
             GL_STATIC_DRAW
         )
 
+    def update(self, vertices, indices):
+        glBindVertexArray(self.vao)
+        glBindBuffer(GL_ARRAY_BUFFER, self.vbo)
+        glBufferData(
+            GL_ARRAY_BUFFER,
+            ctypes.sizeof(GLfloat * len(vertices)),
+            (GLfloat * len(vertices))(*vertices),
+            GL_STATIC_DRAW
+        )
+
     def draw(self):
         glBindVertexArray(self.vao)
         # glDrawElements(GL_TRIANGLES, self.renderer.vCount, GL_UNSIGNED_INT, 0)

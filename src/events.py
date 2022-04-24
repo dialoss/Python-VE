@@ -23,9 +23,7 @@ class Events:
     sens = 0.1
     deltaX = 90
     deltaY = 0
-    firstMouse = True
-    blockRemoved = []
-    blockPlaced = []
+    updateBlock = []
 
     @classmethod
     def update(cls, dt):
@@ -88,10 +86,10 @@ class Events:
         Debug.log(coords)
         Debug.log(normal)
 
-        if button == pyglet.window.key.LEFT:
-            Actions.updateBlock.append([coords[0], coords[1], coords[2], 1])
-        if button == pyglet.window.key.RIGHT:
-            Actions.updateBlock.append([coords[0] + normal[0],
+        if button == 1:
+            cls.updateBlock.append([coords[0], coords[1], coords[2], 1])
+        if button == 2:
+            cls.updateBlock.append([coords[0] + normal[0],
                                         coords[1] + normal[1],
                                         coords[2] + normal[2], 2])
 

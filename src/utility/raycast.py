@@ -1,7 +1,6 @@
 import glm
 from src.utility.variables import *
 import math
-from src.world.chunkManager import *
 
 
 def sign(val):
@@ -20,6 +19,10 @@ def compare(prev, cur):
 
 class Raycast:
     @classmethod
+    def install(cls, world):
+        cls.world = world
+
+    @classmethod
     def hit_ray(cls, pos, dir, dist, normal):
         px = pos.x
         py = pos.y
@@ -37,7 +40,7 @@ class Raycast:
             cy = math.floor(py)
             cz = math.floor(pz)
 
-            type = ChunkManager.get_voxel(cx, cy, cz)
+            type = cls.world.get_voxel(cx, cy, cz)
             if type >= 1:
                 return [cx, cy, cz]
             if type == -1:

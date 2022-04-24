@@ -18,7 +18,8 @@ class Window(pyglet.window.Window):
         super().__init__(*args, **kwargs)
         self.camera = camera
         self.shader = shader
-        ChunkManager.create(2, 2)
+        self.world = ChunkManager(2, 2)
+        Raycast.install(self.world)
         Events.camera = self.camera
         Events.mouseX = self.width / 2
         Events.mouseY = self.height / 2
@@ -33,7 +34,6 @@ class Window(pyglet.window.Window):
         self.clear()
         self.shader.use()
         Texture.use()
-
         self.shader.uniformi("texture_array", 0)
         self.shader.uniformm("proj", self.camera.proj)
         self.shader.uniformm("view", self.camera.lookAt)
@@ -52,9 +52,10 @@ class Window(pyglet.window.Window):
         self.set_exclusive_mouse(Events.hideMouse)
         Events.update(delta_time)
         self.camera.update_matrix()
-        if len(Actions.updateBlock) > 0:
-            for op in Actions.updateBlock:
-                chunk = ChunkManager.get_chunk(op[0], op[1], op[2])
+        update_chunk = []
+        if len(Events.updateBlock) > 0:
+            for op in Events.updateBlock:
+                chunk = self.world.get_chunk(op[0], op[1], op[2])
                 vx = op[0] - chunk.posX * W
                 vz = op[2] - chunk.posZ * D
                 y = op[1]
@@ -64,8 +65,11 @@ class Window(pyglet.window.Window):
                 else:
                     chunk.voxels[vz + D * (vx + W * y)] = 2
                     chunk.mesh.place_block(vx, y, vz, 2)
-
-                chunk.renderer.update(chunk.mesh.vBuffer, chunk.mesh.iBuffer, [3, 2, 1])
+                if not chunk in update_chunk:
+                    update_chunk.append(chunk)
+        Events.updateBlock.clear()
+        for chunk in update_chunk:
+            chunk.renderer.update(chunk.mesh.vBuffer, chunk.mesh.iBuffer)
 
     def on_resize(self, width, height):
         Events.on_resize(width, height)
