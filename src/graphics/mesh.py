@@ -72,8 +72,7 @@ class Mesh:
             self.add_side(geom.sides[i], nx, ny, nz, 1)
 
     def remove_block(self, x, y, z):
-        pos = z + D * (x + W * y)
-        pos *= 6 * 6 * V_SIZE
+        pos = (z + D * (x + W * y)) * 6 * 6 * V_SIZE
         for i in range(pos, pos + 6 * 6 * V_SIZE):
             self.vBuffer[i] = 0
         self.update_nears(x, y, z)
