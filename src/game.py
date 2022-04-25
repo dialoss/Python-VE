@@ -1,15 +1,15 @@
 import time
 
-from events import *
-from glmath import *
+from src.events import *
+from src.glmath import *
 from src.graphics.shader import *
 from src.graphics.texture import *
-from camera import *
+from src.camera import *
 from src.utility.raycast import *
-from utility.debug import *
+from src.utility.debug import *
 from src.world.chunk import *
 import src.utility.variables as util
-from world.chunkManager import *
+from src.world.chunkManager import *
 from src.utility.actions import *
 
 
@@ -91,7 +91,7 @@ class Game:
         self.camera = Camera(fov=70, width=kwargs.get("width"), height=kwargs.get("height"), near=0.1, far=1000)
         self.shader = Shader("../res/shaders/main.vert", "../res/shaders/main.frag")
         self.window = Window(self.shader, self.camera, *args, **kwargs)
-        self.window.set_location(400, 50)
+        self.window.set_location(200, 50)
         Texture.create(32, 32, 3, "D:/programming/Python/newmine/res/textures")
         Texture.add_texture("void.png")
         Texture.add_texture("green.png")

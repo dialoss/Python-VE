@@ -5,8 +5,6 @@ from src.utility.raycast import *
 from src.utility.debug import *
 from src.utility.actions import *
 
-import glmath
-from glmath import *
 import math
 
 
