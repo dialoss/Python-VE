@@ -3,22 +3,25 @@ W = 16
 H = 16
 D = 16
 
-V_SIZE = (3 + 2 + 1)
+V_SIZE = 3
 
+coord_const = int(5e5)
 buffer_size = 10000
+upd_buffer_len = 0
 free_places = Queue()
-global_buffer = [0] * buffer_size * 6 * 6 * V_SIZE
-to_update = []
-for i in range(10000):
+global_buffer = [0] * buffer_size * 36 * V_SIZE
+updated_buffer = [0] * 100 * 36 * V_SIZE
+to_update = dict()
+for i in range(buffer_size):
     free_places.put(i)
 
 
 def resize_buffer():
     global buffer_size
+    new_buf = [0] * buffer_size * 36 * V_SIZE
+    global_buffer.extend(new_buf)
     for i in range(buffer_size, buffer_size * 2):
         free_places.put(i)
-        for j in range(6 * 6 * V_SIZE):
-            global_buffer.append(0)
 
     buffer_size *= 2
 
@@ -29,6 +32,24 @@ def get_pos():
         resize_buffer()
 
     return free_places.queue[0]
+
+
+def add_to_buffer(vertices):
+    global upd_buffer_len
+    last = upd_buffer_len
+    for i in range(last * 36 * V_SIZE, (last + 1) * 36 * V_SIZE):
+        updated_buffer[i] = vertices[i - last * 36 * V_SIZE]
+
+    upd_buffer_len += 1
+    total_size = int(len(updated_buffer) / 36 / V_SIZE)
+    if upd_buffer_len == total_size:
+        new_buf = [0] * upd_buffer_len * 36 * V_SIZE
+        updated_buffer.extend(new_buf)
+
+
+def clear_updated_buffer():
+    global upd_buffer_len
+    upd_buffer_len = 0
 
 
 def get_color(r, g, b):

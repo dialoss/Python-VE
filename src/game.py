@@ -1,12 +1,13 @@
 import time
 
+
 from src.events import *
 from src.glmath import *
 from src.graphics.shader import *
 from src.graphics.texture import *
 from src.camera import *
 from src.utility.raycast import *
-from src.utility.debug import *
+import src.utility.debug as Debug
 from src.world.chunk import *
 import src.utility.variables as util
 from src.world.chunkManager import *
@@ -19,7 +20,8 @@ class Window(pyglet.window.Window):
         self.camera = camera
         self.shader = shader
         self.world = ChunkManager(2, 2)
-        self.worldRenderer = Renderer(util.global_buffer, [], [3, 2, 1])
+        self.worldRenderer = Renderer(util.global_buffer, [], [3])
+        util.global_buffer.clear()
         Raycast.install(self.world)
         Events.camera = self.camera
         Events.mouseX = self.width / 2
@@ -27,8 +29,10 @@ class Window(pyglet.window.Window):
         glEnable(GL_DEPTH_TEST)
         pyglet.clock.schedule_interval(self.update, 1.0 / 1000)
 
-        self.crossRenderer = Renderer(geom.cross, [], [3])
+        self.crossRenderer = LineRenderer(geom.cross, [3])
         self.crosshader = Shader("../res/shaders/cross.vert", "../res/shaders/cross.frag")
+
+        Debug.memory_usage(self.world)
 
     def on_draw(self):
         glClearColor(*util.get_color(146, 188, 222), 1)
@@ -38,7 +42,7 @@ class Window(pyglet.window.Window):
         self.shader.uniformi("texture_array", 0)
         self.shader.uniformm("proj", self.camera.proj)
         self.shader.uniformm("view", self.camera.lookAt)
-        Debug.log(self.camera.pos)
+        #Debug.log(self.camera.pos)
         self.worldRenderer.draw()
         self.crosshader.use()
         self.crossRenderer.draw()
@@ -64,8 +68,10 @@ class Window(pyglet.window.Window):
                 else:
                     chunk.voxels[vz + D * (vx + W * y)] = 2
                     chunk.mesh.place_block(vx, y, vz)
-        Events.updateBlock.clear()
-        self.worldRenderer.update(global_buffer, to_update)
+            self.worldRenderer.update(updated_buffer, to_update)
+            Events.updateBlock.clear()
+            to_update.clear()
+            clear_updated_buffer()
 
     def on_resize(self, width, height):
         Events.on_resize(width, height)

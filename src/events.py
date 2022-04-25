@@ -2,7 +2,7 @@ import pyglet
 from pyglet.gl import *
 import glm
 from src.utility.raycast import *
-from src.utility.debug import *
+import src.utility.debug as Debug
 from src.utility.actions import *
 
 import math
@@ -92,8 +92,6 @@ class Events:
     def on_mouse_press(cls, button):
         normal = [0, 0, 0]
         coords = Raycast.hit_ray_new(cls.camera.pos, cls.camera.dir, 50, normal)
-        Debug.log(coords)
-        Debug.log(normal)
 
         if coords[0] == coords[1] == coords[2] == 1e9:
             return
