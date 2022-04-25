@@ -3,6 +3,7 @@ import ctypes
 from src.utility.variables import *
 from collections import deque
 
+
 class LineRenderer:
     def __init__(self, vertices, attrs):
         self.vao = GLuint(0)
@@ -77,9 +78,12 @@ class Renderer:
         #     GL_STATIC_DRAW
         # )
 
-    def update(self, vertices, to_update):
+    def update(self, chunk):
         glBindVertexArray(self.vao)
         glBindBuffer(GL_ARRAY_BUFFER, self.vbo)
+
+        vertices = chunk.buffer
+        to_update = chunk.to_update
 
         count = 0
         for pos, sides in to_update.items():

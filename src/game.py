@@ -1,5 +1,5 @@
 import time
-
+from multiprocessing import Process
 
 from src.events import *
 from src.glmath import *
@@ -15,14 +15,12 @@ from src.utility.actions import *
 
 
 class Window(pyglet.window.Window):
-    def __init__(self, shader, camera, *args, **kwargs):
+    def __init__(self, shader, camera, world, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.camera = camera
         self.shader = shader
-        self.world = ChunkManager(2, 2)
-        self.worldRenderer = Renderer(util.global_buffer, [], [3])
-        util.global_buffer.clear()
-        Raycast.install(self.world)
+        self.world_renderer = Renderer(util.global_buffer, [], [3])
+        clear_global_buffer()
         Events.camera = self.camera
         Events.mouseX = self.width / 2
         Events.mouseY = self.height / 2
@@ -32,8 +30,6 @@ class Window(pyglet.window.Window):
         self.crossRenderer = LineRenderer(geom.cross, [3])
         self.crosshader = Shader("../res/shaders/cross.vert", "../res/shaders/cross.frag")
 
-        Debug.memory_usage(self.world)
-
     def on_draw(self):
         glClearColor(*util.get_color(146, 188, 222), 1)
         self.clear()
@@ -42,36 +38,20 @@ class Window(pyglet.window.Window):
         self.shader.uniformi("texture_array", 0)
         self.shader.uniformm("proj", self.camera.proj)
         self.shader.uniformm("view", self.camera.lookAt)
-        #Debug.log(self.camera.pos)
-        self.worldRenderer.draw()
+        self.world_renderer.draw()
         self.crosshader.use()
         self.crossRenderer.draw()
 
     def update(self, delta_time):
         if Events.closeWindow:
+            self.world_generator.join()
             self.close()
             return
         self.set_exclusive_mouse(Events.hideMouse)
         Events.update(delta_time)
         self.camera.update_matrix()
-        if len(Events.updateBlock) > 0:
-            for op in Events.updateBlock:
-                chunk = self.world.get_chunk(op[0], op[1], op[2])
-                if chunk is None:
-                    continue
-                vx = op[0] - chunk.posX * W
-                vz = op[2] - chunk.posZ * D
-                y = op[1]
-                if op[3] == 1:
-                    chunk.voxels[vz + D * (vx + W * y)] = 0
-                    chunk.mesh.remove_block(vx, y, vz)
-                else:
-                    chunk.voxels[vz + D * (vx + W * y)] = 2
-                    chunk.mesh.place_block(vx, y, vz)
-            self.worldRenderer.update(updated_buffer, to_update)
-            Events.updateBlock.clear()
-            to_update.clear()
-            clear_updated_buffer()
+        Game.update(self.world_renderer)
+        #Debug.log(self.camera.pos)
 
     def on_resize(self, width, height):
         Events.on_resize(width, height)
@@ -93,21 +73,53 @@ class Window(pyglet.window.Window):
 
 
 class Game:
-    def __init__(self, *args, **kwargs):
-        self.camera = Camera(fov=70, width=kwargs.get("width"), height=kwargs.get("height"), near=0.1, far=1000)
-        self.shader = Shader("../res/shaders/main.vert", "../res/shaders/main.frag")
-        self.window = Window(self.shader, self.camera, *args, **kwargs)
-        self.window.set_location(200, 50)
+    @classmethod
+    def initialize(cls, *args, **kwargs):
+        cls.camera = Camera(fov=70, width=kwargs.get("width"), height=kwargs.get("height"), near=0.1, far=1000)
+        cls.shader = Shader("../res/shaders/main.vert", "../res/shaders/main.frag")
+
         Texture.create(32, 32, 3, "D:/programming/Python/newmine/res/textures")
         Texture.add_texture("void.png")
         Texture.add_texture("green.png")
         Texture.add_texture("orange.png")
         Texture.generate_mipmaps()
 
-    def run(self):
+        cls.world = ChunkManager(2, 2)
+        Raycast.install(cls.world)
+
+        cls.window = Window(cls.shader, cls.camera, cls.world, *args, **kwargs)
+        cls.window.set_location(200, 50)
+        print(id(cls.world))
+        cls.world_generator = Process(target=create_chunks, args=(cls.camera.pos, Events.closeWindow, cls.world, ))
+        cls.world_generator.start()
+
+    @classmethod
+    def update(cls, world_renderer):
+        if len(Events.updateBlock) > 0:
+            for op in Events.updateBlock:
+                chunk = cls.world.get_chunk(op[0], op[1], op[2])
+                if chunk is None:
+                    continue
+                vx = op[0] - chunk.posX * W
+                vz = op[2] - chunk.posZ * D
+                y = op[1]
+                if op[3] == 1:
+                    chunk.voxels[vz + D * (vx + W * y)] = 0
+                    chunk.mesh.remove_block(vx, y, vz)
+                else:
+                    chunk.voxels[vz + D * (vx + W * y)] = 2
+                    chunk.mesh.place_block(vx, y, vz)
+            Events.updateBlock.clear()
+        for chunk in cls.world.update_chunks:
+            world_renderer.update(chunk)
+            chunk.clear_buffers()
+        #update_chunks.clear()
+
+    @classmethod
+    def run(cls):
         pyglet.app.run()
 
 
 if __name__ == "__main__":
-    game = Game(width=1000, height=800, caption="Minecraft", resizable=True, vsync=False)
-    game.run()
+    Game.initialize(width=1000, height=800, caption="Minecraft", resizable=True, vsync=False)
+    Game.run()
