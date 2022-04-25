@@ -19,11 +19,12 @@ class Events:
     camera = None
     mouseX = 0
     mouseY = 0
-    speed = 20
+    speed = 10
     sens = 0.1
     deltaX = 90
     deltaY = 0
     updateBlock = []
+    closeWindow = False
 
     @classmethod
     def update(cls, dt):
@@ -49,6 +50,9 @@ class Events:
         if cls.justClicked(pyglet.window.key.TAB):
             cls.firstMouse = True
             cls.hideMouse = not cls.hideMouse
+
+        if cls.justClicked(pyglet.window.key.ESCAPE):
+            cls.closeWindow = True
 
         cls.curFrame += 1
 
@@ -80,18 +84,28 @@ class Events:
         cls.pressed[symbol] = 0
 
     @classmethod
+    def on_mouse_scroll(cls, scroll_y):
+        if cls.speed < 6:
+            cls.speed += scroll_y * 0.5
+        else:
+            cls.speed += scroll_y * 2
+
+    @classmethod
     def on_mouse_press(cls, button):
         normal = [0, 0, 0]
-        coords = Raycast.hit_ray(cls.camera.pos, cls.camera.dir, 50, normal)
+        coords = Raycast.hit_ray_new(cls.camera.pos, cls.camera.dir, 50, normal)
         Debug.log(coords)
         Debug.log(normal)
+
+        if coords[0] == coords[1] == coords[2] == 1e9:
+            return
 
         if button == 1:
             cls.updateBlock.append([coords[0], coords[1], coords[2], 1])
         else:
             cls.updateBlock.append([coords[0] + normal[0],
-                                        coords[1] + normal[1],
-                                        coords[2] + normal[2], 2])
+                                    coords[1] + normal[1],
+                                    coords[2] + normal[2], 2])
 
     @classmethod
     def on_mouse_moved(cls, dx, dy):

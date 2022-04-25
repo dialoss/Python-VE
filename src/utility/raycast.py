@@ -59,15 +59,15 @@ class Raycast:
             if abs(dir.x - 0) < 0.0000001:
                 vx = 1e9
             else:
-                vx = (dx - px) / dir.x
+                vx = abs((dx - px) / dir.x)
             if abs(dir.y - 0) < 0.0000001:
                 vy = 1e9
             else:
-                vy = (dy - py) / dir.y
+                vy = abs((dy - py) / dir.y)
             if abs(dir.z - 0) < 0.0000001:
                 vz = 1e9
             else:
-                vz = (dz - pz) / dir.z
+                vz = abs((dz - pz) / dir.z)
 
             for i in range(3):
                 if i == 0:
@@ -104,4 +104,99 @@ class Raycast:
             normal[0] = normal_tmp[0]
             normal[1] = normal_tmp[1]
             normal[2] = normal_tmp[2]
+        return [1e9, 1e9, 1e9]
+
+    @classmethod
+    def hit_ray_new(cls, pos, dir, dist, normal):
+        px = pos.x
+        py = pos.y
+        pz = pos.z
+
+        dx = dir.x
+        dy = dir.y
+        dz = dir.z
+
+        t = 0
+        ix = math.floor(px)
+        iy = math.floor(py)
+        iz = math.floor(pz)
+
+        stepx = sign(dx)
+        stepy = sign(dy)
+        stepz = sign(dz)
+
+        inf = 1e15
+
+        txDelta = inf
+        tyDelta = inf
+        tzDelta = inf
+
+        if dx != 0:
+            txDelta = abs(1 / dx)
+        if dy != 0:
+            tyDelta = abs(1 / dy)
+        if dz != 0:
+            tzDelta = abs(1 / dz)
+
+        xdist = ix + 1 - px
+        ydist = iy + 1 - py
+        zdist = iz + 1 - pz
+
+        if stepx <= 0:
+            xdist = px - ix
+        if stepy <= 0:
+            ydist = py - iy
+        if stepz <= 0:
+            zdist = pz - iz
+
+        txMax = inf
+        tyMax = inf
+        tzMax = inf
+
+        if txDelta < inf:
+            txMax = txDelta * xdist
+        if tyDelta < inf:
+            tyMax = tyDelta * ydist
+        if tzDelta < inf:
+            tzMax = tzDelta * zdist
+
+        steppedIndex = -1
+
+        while t <= dist:
+            type = cls.world.get_voxel(ix, iy, iz)
+            if type >= 1:
+                if steppedIndex == 0:
+                    normal[0] = -stepx
+                if steppedIndex == 1:
+                    normal[1] = -stepy
+                if steppedIndex == 2:
+                    normal[2] = -stepz
+                return [ix, iy, iz]
+            if type == -1:
+                return [1e9, 1e9, 1e9]
+
+            if txMax < tyMax:
+                if txMax < tzMax:
+                    ix += stepx
+                    t = txMax
+                    txMax += txDelta
+                    steppedIndex = 0
+
+                else:
+                    iz += stepz
+                    t = tzMax
+                    tzMax += tzDelta
+                    steppedIndex = 2
+            else:
+                if tyMax < tzMax:
+                    iy += stepy
+                    t = tyMax
+                    tyMax += tyDelta
+                    steppedIndex = 1
+                else:
+                    iz += stepz
+                    t = tzMax
+                    tzMax += tzDelta
+                    steppedIndex = 2
+
         return [1e9, 1e9, 1e9]

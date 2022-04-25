@@ -1,6 +1,7 @@
 from pyglet.gl import *
 import ctypes
 from src.utility.variables import *
+from collections import deque
 
 
 class Renderer:
@@ -27,7 +28,8 @@ class Renderer:
 
         shift = 0
         for i in range(len(attrs)):
-            glVertexAttribPointer(i, attrs[i], GL_FLOAT, GL_FALSE, v_size * ctypes.sizeof(GLfloat), shift * ctypes.sizeof(GLfloat))
+            glVertexAttribPointer(i, attrs[i], GL_FLOAT, GL_FALSE, v_size * ctypes.sizeof(GLfloat),
+                                  shift * ctypes.sizeof(GLfloat))
             glEnableVertexAttribArray(i)
             shift += attrs[i]
 
@@ -42,15 +44,20 @@ class Renderer:
             GL_STATIC_DRAW
         )
 
-    def update(self, vertices, indices):
+    def update(self, vertices, to_update):
         glBindVertexArray(self.vao)
         glBindBuffer(GL_ARRAY_BUFFER, self.vbo)
-        glBufferData(
-            GL_ARRAY_BUFFER,
-            ctypes.sizeof(GLfloat * len(vertices)),
-            (GLfloat * len(vertices))(*vertices),
-            GL_STATIC_DRAW
-        )
+
+        for pos in to_update:
+            buffer_pos = pos * 6 * 6 * V_SIZE
+            data = vertices[buffer_pos:(pos + 1) * 6 * 6 * V_SIZE]
+            glBufferSubData(
+                GL_ARRAY_BUFFER,
+                ctypes.sizeof(GLfloat * buffer_pos),
+                ctypes.sizeof(GLfloat * len(data)),
+                (GLfloat * len(data))(*data)
+            )
+        to_update.clear()
 
     def draw(self):
         glBindVertexArray(self.vao)
