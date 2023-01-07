@@ -1,9 +1,9 @@
 from src.world.chunk import *
+import src.utility.variables as util
 import time
 
 
 def create_chunks(pos, should_close, world):
-    print(id(world))
     while not should_close:
         px = int(pos.x) // W
         pz = int(pos.z) // D
@@ -28,15 +28,15 @@ class ChunkManager:
     update_chunks = []
 
     def __init__(self, width, depth):
-        pass
-        # for i in range(-width, width + 1):
-        #     for j in range(-depth, depth + 1):
-        #         self.chunks[i * 100 + j] = Chunk(i, j)
-        # for i in range(-width, width + 1):
-        #     for j in range(-depth, depth + 1):
-        #         chunk = self.chunks[i * 100 + j]
-        #         self.get_nears(chunk, i, j)
-        #         chunk.mesh = Mesh(chunk)
+        for i in range(-width, width + 1):
+            for j in range(-depth, depth + 1):
+                self.chunks[i * 100 + j] = Chunk(i, j)
+        for i in range(-width, width + 1):
+            for j in range(-depth, depth + 1):
+                chunk = self.chunks[i * 100 + j]
+                self.get_nears(chunk, i, j)
+                chunk.mesh = Mesh(chunk)
+                update_chunks.append(chunk)
 
     def get_nears(self, chunk, cx, cz):
         for k in range(4):

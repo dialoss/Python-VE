@@ -67,17 +67,6 @@ class Renderer:
             glEnableVertexAttribArray(i)
             shift += attrs[i]
 
-        # self.ebo = GLuint(0)
-        # glGenBuffers(1, ctypes.byref(self.ebo))
-        # glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.ebo)
-        #
-        # glBufferData(
-        #     GL_ELEMENT_ARRAY_BUFFER,
-        #     ctypes.sizeof(GLuint * len(indices)),
-        #     (GLuint * len(indices))(*indices),
-        #     GL_STATIC_DRAW
-        # )
-
     def update(self, chunk):
         glBindVertexArray(self.vao)
         glBindBuffer(GL_ARRAY_BUFFER, self.vbo)

@@ -1,5 +1,7 @@
 import time
-from multiprocessing import Process
+from threading import Thread
+from multiprocessing import Process, Manager, Queue
+from multiprocessing.managers import BaseManager
 
 from src.events import *
 from src.glmath import *
@@ -44,14 +46,12 @@ class Window(pyglet.window.Window):
 
     def update(self, delta_time):
         if Events.closeWindow:
-            self.world_generator.join()
             self.close()
             return
         self.set_exclusive_mouse(Events.hideMouse)
         Events.update(delta_time)
         self.camera.update_matrix()
         Game.update(self.world_renderer)
-        #Debug.log(self.camera.pos)
 
     def on_resize(self, width, height):
         Events.on_resize(width, height)
@@ -82,6 +82,7 @@ class Game:
         Texture.add_texture("void.png")
         Texture.add_texture("green.png")
         Texture.add_texture("orange.png")
+
         Texture.generate_mipmaps()
 
         cls.world = ChunkManager(2, 2)
@@ -89,9 +90,6 @@ class Game:
 
         cls.window = Window(cls.shader, cls.camera, cls.world, *args, **kwargs)
         cls.window.set_location(200, 50)
-        print(id(cls.world))
-        cls.world_generator = Process(target=create_chunks, args=(cls.camera.pos, Events.closeWindow, cls.world, ))
-        cls.world_generator.start()
 
     @classmethod
     def update(cls, world_renderer):
@@ -110,10 +108,11 @@ class Game:
                     chunk.voxels[vz + D * (vx + W * y)] = 2
                     chunk.mesh.place_block(vx, y, vz)
             Events.updateBlock.clear()
-        for chunk in cls.world.update_chunks:
+
+        for chunk in update_chunks:
             world_renderer.update(chunk)
             chunk.clear_buffers()
-        #update_chunks.clear()
+        update_chunks.clear()
 
     @classmethod
     def run(cls):

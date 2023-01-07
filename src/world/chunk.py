@@ -29,5 +29,6 @@ class Chunk:
                         self.voxels[z + D * (x + W * y)] = 1
 
     def clear_buffers(self):
+        self.count = 0
         self.to_update.clear()
         self.buffer = [0] * 100 * 36 * V_SIZE

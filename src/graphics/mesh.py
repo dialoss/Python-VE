@@ -50,15 +50,6 @@ class Mesh:
 
         return self.chunk.voxels[zn + D * (xn + W * yn)] != 0
 
-    def add_to_buffer(self):
-        # new_buf = [0] * buffer_size * 36 * V_SIZE
-        # global_buffer.extend(new_buf)
-        # for i in range(buffer_size, buffer_size * 2):
-        #     free_places.put(i)
-        #
-        # buffer_size *= 2
-        pass
-
     def add_side(self, chunk, g, x, y, z, ind):
         if self.check_nears(chunk, g, x, y, z):
             return
@@ -67,11 +58,11 @@ class Mesh:
             free_pos = get_pos()
             free_places.get(0)
             chunk.posititons[z + D * (x + W * y)] = free_pos
+
         v = geom.cube[g]
-
         chunk.numberSides[z + D * (x + W * y)] += 1
-
         buffer_pos = chunk.count * 36 * V_SIZE + g * 6 * V_SIZE
+
         for k in range(len(v)):
             vx = v[k][0] + x + chunk.posX * W + coord_const
             vy = v[k][1] + y + coord_const
@@ -97,9 +88,9 @@ class Mesh:
             free_places.put(pos)
             chunk.posititons[z + D * (x + W * y)] = -1
 
-        buffer_pos = chunk.mesh.count * 36 * V_SIZE + g * 6 * V_SIZE
+        buffer_pos = chunk.count * 36 * V_SIZE + g * 6 * V_SIZE
         for i in range(6 * V_SIZE):
-            chunk.mesh.buffer[buffer_pos + i] = 0
+            chunk.buffer[buffer_pos + i] = 0
 
         if chunk.to_update.get(pos) is None:
             chunk.to_update[pos] = []
@@ -124,23 +115,25 @@ class Mesh:
                     self.add_side(chunk, geom.sides[i], nx, ny, nz, ind)
                 else:
                     self.remove_side(chunk, geom.sides[i], nx, ny, nz)
+                chunk.count += 1
+                update_chunks.append(chunk)
 
     def remove_block(self, x, y, z):
         pos = self.chunk.posititons[z + D * (x + W * y)]
         if pos == -1:
             return
-
-        for i in range(36 * V_SIZE):
-            pass
         self.chunk.to_update[pos] = [0, 1, 2, 3, 4, 5]
         free_places.put(pos)
         self.chunk.posititons[z + D * (x + W * y)] = -1
         self.chunk.numberSides[z + D * (x + W * y)] = 0
+        self.chunk.count += 1
         self.update_nears(x, y, z)
+        update_chunks.append(self.chunk)
 
     def place_block(self, x, y, z):
         ind = self.chunk.voxels[z + D * (x + W * y)]
         for g in range(6):
             self.add_side(self.chunk, g, x, y, z, ind)
-        update_chunks.append(self.chunk)
+        self.chunk.count += 1
         self.update_nears(x, y, z)
+        update_chunks.append(self.chunk)
